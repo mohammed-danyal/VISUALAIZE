@@ -14,8 +14,10 @@ import {
   GitBranch,
   Globe,
   Layers,
+  Maximize2,
   MessageSquare,
   Mic,
+  Minimize2,
   Network,
   PanelRightClose, PanelRightOpen,
   Paperclip,
@@ -209,6 +211,7 @@ function EditorContent({ onBack }: EditorProps) {
   const [isChatting, setIsChatting] = useState(false);
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const codeCache = useRef(new Map<string, codeObject>());
   const reactFlowWrapper = useRef(null);
@@ -357,6 +360,15 @@ function EditorContent({ onBack }: EditorProps) {
 
   const showBackground = nodes.length === 0;
 
+  // Exit fullscreen on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
+
   return (
     <div className="relative flex h-screen w-screen bg-black overflow-hidden font-sans text-slate-200">
       
@@ -375,6 +387,7 @@ function EditorContent({ onBack }: EditorProps) {
       <div className="relative flex-1 h-full flex flex-col z-10" ref={reactFlowWrapper}>
         
         {/* TOP BAR */}
+        {!isFullscreen && (
         <div className="absolute top-0 left-0 w-full p-6 z-40 flex justify-between items-center pointer-events-none">
           <button onClick={onBack} className="focus-ring pointer-events-auto flex items-center gap-2 text-slate-400 hover:text-white transition-colors px-4 py-2 rounded-full hover:bg-white/10 backdrop-blur-md border border-white/5 hover:border-white/20">
             <ArrowLeft className="w-4 h-4" /> <span className="font-mono text-xs tracking-widest">TERMINAL</span>
@@ -396,6 +409,18 @@ function EditorContent({ onBack }: EditorProps) {
              )}
           </div>
         </div>
+        )}
+
+        {/* FULLSCREEN TOGGLE BUTTON */}
+        <button
+          onClick={() => setIsFullscreen(f => !f)}
+          className="focus-ring absolute top-4 right-4 z-50 pointer-events-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/60 backdrop-blur-md border border-white/10 text-xs font-mono text-slate-300 hover:bg-blue-600 hover:text-white hover:border-blue-500/50 transition-all shadow-lg"
+          title={isFullscreen ? 'Exit Focus Mode (Esc)' : 'Focus Mode'}
+          aria-label={isFullscreen ? 'Exit Focus Mode' : 'Enter Focus Mode'}
+        >
+          {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          {isFullscreen ? 'EXIT FOCUS' : 'FOCUS'}
+        </button>
 
         {nodes.length === 0 && !isGenerating && <ZeroState onSelect={generateGraph} />}
         {nodes.length === 0 && !isGenerating && <SystemLogs />}
@@ -410,6 +435,7 @@ function EditorContent({ onBack }: EditorProps) {
         </div>
 
         {/* INPUT BAR */}
+        {!isFullscreen && (
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[600px] z-50">
             <form onSubmit={(e) => { e.preventDefault(); generateGraph(prompt); }} className="relative group flex items-center gap-3 p-2 pl-4 rounded-full border border-white/10 bg-black/60 backdrop-blur-xl shadow-[0_0_40px_-10px_rgba(0,0,0,0.5)] focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">
                 <Terminal size={18} className="text-blue-400" />
@@ -429,9 +455,11 @@ function EditorContent({ onBack }: EditorProps) {
                 </button>
             </form>
         </div>
+        )}
       </div>
 
       {/* RIGHT: SLIDING SIDEBAR */}
+      {!isFullscreen && (
       <div 
         className={`border-l border-white/10 bg-slate-900/60 backdrop-blur-2xl flex flex-col shadow-2xl z-40 transition-all duration-500 ease-in-out overflow-hidden`}
         style={{ width: isSidebarOpen && graphData ? '450px' : '0px', opacity: isSidebarOpen && graphData ? 1 : 0 }}
@@ -587,6 +615,7 @@ function EditorContent({ onBack }: EditorProps) {
             </>
         )}
       </div>
+      )}
     </div>
   );
 }
